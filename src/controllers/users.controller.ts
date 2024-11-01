@@ -78,4 +78,20 @@ export default class UsersController {
             return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
         }
     }
+    public async ForgetPassword(req: any, res: any){
+        const { email } = req.body
+        const userExists = await User.findOne({...{email}})
+        if(!userExists) return res.status(404).json({message: "usuario não encontrado!"})
+    }
+    public async Delete(req: any, res: any){
+        const {params: { id }} = req
+            
+        try{
+            await User.findByIdAndDelete(id)
+            return res.status(201).json({message: "Usuario deletado com sucesso"})
+        }catch(error){
+            console.log(error)
+            return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
+        }
+    }
 }

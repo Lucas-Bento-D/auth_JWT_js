@@ -19,4 +19,8 @@ router.post("/auth/login", users.Login)
 
 router.get("/user/:id", checkToken, users.Get)
 
+router.post("/auth/forgetPassword", users.ForgetPassword)
+
+router.delete("/user/deleteAccount/:id", checkToken, users.Delete)
+
 export default router
