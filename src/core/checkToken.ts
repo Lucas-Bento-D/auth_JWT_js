@@ -9,7 +9,8 @@ const checkToken = (req: any, res: any, next: any) => {
     
     try {
         const secret = process.env.SECRET
-        jwt.verify(token, secret)
+        const decoded = jwt.verify(token, secret)
+        req.userId = decoded.id
         next()
     } catch (error) {
         res.status(400).json({message: 'Token invalido'})
