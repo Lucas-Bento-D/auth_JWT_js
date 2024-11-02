@@ -84,9 +84,6 @@ export default class UsersController {
         if(!userExists) return res.status(404).json({message: "usuario não encontrado!"})
     }
     public async Delete(req: any, res: any){
-        // pegar o id do usuario pelo parametro gerou o problema de verificação onde qualquer usuario conseguia excluir qualquer usuario
-        // const {params: { id }} = req
-
         // a função checkToken agora seta o id e assim pegamos na função, excluindo sempre o usuario autenticado
         const {userId: id} = req
         try{
