@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const User = require("../models/User")
+const mongoose = require("mongoose");
 
 export default class UsersController {
     public async Get (req: any, res: any) {
@@ -89,6 +90,34 @@ export default class UsersController {
         try{
             await User.findByIdAndDelete(id)
             return res.status(201).json({message: "Usuario deletado com sucesso"})
+        }catch(error){
+            console.log(error)
+            return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
+        }
+    }
+    public async Update(req: any, res: any){
+        const _id = new mongoose.Types.ObjectId(req.userId)
+        const {name, email, password, confirmPassword} = req.body
+        let user: IUser = {
+            name,
+            email,
+        }
+
+        if(password != confirmPassword) return res.status(422).json({message: "Senhas não conferem"})
+        if(password && confirmPassword){
+            const salt = await bcrypt.genSalt(12)
+            const passwordHash = await bcrypt.hash(password, salt)
+
+            user = {
+                name,
+                email,
+                password: passwordHash
+            }
+        }
+
+        try{
+            await User.updateOne({...{_id}}, user, { status: req.status })
+            return res.status(201).json({message: 'Usuario atualizado com sucesso!'})
         }catch(error){
             console.log(error)
             return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
