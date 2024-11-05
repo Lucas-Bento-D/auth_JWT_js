@@ -22,7 +22,7 @@ router.post("/auth/login", users.Login)
 
 router.get("/user/:id", checkToken, users.Get)
 
-router.post("/auth/forgetPassword", users.ForgetPassword)
+router.patch("/recovery/password/:code", users.RecoveryPassword)
 
 router.delete("/user/deleteAccount/", checkToken, users.Delete)
 

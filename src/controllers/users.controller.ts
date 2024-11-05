@@ -80,10 +80,37 @@ export default class UsersController {
             return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
         }
     }
-    public async ForgetPassword(req: any, res: any){
-        const { email } = req.body
-        const userExists = await User.findOne({...{email}})
-        if(!userExists) return res.status(404).json({message: "usuario não encontrado!"})
+    public async RecoveryPassword(req: any, res: any){
+        const { body: {email, password, confirmPassword}, params: {code} } = req
+
+        if(!email) return res.status(422).json({message: "Email é obrigatorio"})
+        if(!password) return res.status(422).json({message: "Password é obrigatorio"})
+        
+        const user = await User.findOne({...{email}})
+        if(!user) return res.status(404).json({message: "O usuario não existe"})
+        
+        //code validation
+        const checkCode = await bcrypt.compare(code, user.recoveryPass.code)
+        if(!checkCode) return res.status(422).json({message: "Código invalido!"})
+
+        if(password != confirmPassword) return res.status(422).json({message: "Senhas não conferem"})
+
+        const salt = await bcrypt.genSalt(12)
+        const passwordHash = await bcrypt.hash(password, salt)
+        const newPass = {
+            password: passwordHash,
+            recoveryPass: {
+                code: ""
+            }
+        }
+
+        try{
+            await User.updateOne({...{email}}, newPass, { status: req.status })
+            return res.status(201).json({message: 'Senha atualizada com sucesso!'})
+        }catch(error){
+            console.log(error)
+            return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
+        }
     }
     public async Delete(req: any, res: any){
         // a função checkToken agora seta o id e assim pegamos na função, excluindo sempre o usuario autenticado
@@ -126,9 +153,12 @@ export default class UsersController {
     }
     public async UpdateOTP(req: any, res: any, next: any){
         const {email} = req.body
+
+        const code = generateCode()
+        const salt = await bcrypt.genSalt(12)
+        const codeHash = await bcrypt.hash(code, salt)
         const recoveryPass = {
-            code: generateCode(),
-            expirationDate: new Date( Date.now() + 1000 + 1000)
+            code: codeHash,
         }
 
         const userExists = await User.findOne({...{email}})
@@ -136,7 +166,7 @@ export default class UsersController {
 
         try{
             await User.findOneAndUpdate({email}, {...{recoveryPass}}, { status: req.status })
-            req.recoveryPass = recoveryPass
+            req.recoveryPass = {code}
             next()
         }catch(error){
             console.log(error)
