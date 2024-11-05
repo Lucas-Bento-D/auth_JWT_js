@@ -1,4 +1,5 @@
 import { Request, Response } from "express"
+import generateCode from "../utils/generateCode";
 
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
@@ -118,6 +119,25 @@ export default class UsersController {
         try{
             await User.updateOne({...{_id}}, user, { status: req.status })
             return res.status(201).json({message: 'Usuario atualizado com sucesso!'})
+        }catch(error){
+            console.log(error)
+            return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
+        }
+    }
+    public async UpdateOTP(req: any, res: any, next: any){
+        const {email} = req.body
+        const recoveryPass = {
+            code: generateCode(),
+            expirationDate: new Date( Date.now() + 1000 + 1000)
+        }
+
+        const userExists = await User.findOne({...{email}})
+        if(!userExists) return res.status(422).json({message: "Por favor, utilize outro email"})
+
+        try{
+            await User.findOneAndUpdate({email}, {...{recoveryPass}}, { status: req.status })
+            req.recoveryPass = recoveryPass
+            next()
         }catch(error){
             console.log(error)
             return res.status(500).json({message: 'Aconteceu um erro no servidor, tente mais tarde'})
